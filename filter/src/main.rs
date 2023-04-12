@@ -159,15 +159,19 @@ fn filter_with_expression(
 			continue;
 		}
 
+		let mut line_invalid = || {
+			if invalid_lines == 0 {
+				first_invalid_line = line_number;
+				invalid_line_content = line.clone();
+			}
+
+			invalid_lines += 1;
+		};
+
 		let ctx = match get_context_for_line(&line, column_types, &columns) {
 			Ok(c) => c,
 			Err(_) => {
-				if invalid_lines == 0 {
-					first_invalid_line = line_number;
-					invalid_line_content = line.clone();
-				}
-
-				invalid_lines += 1;
+				line_invalid();
 				continue;
 			}
 		};
@@ -175,10 +179,8 @@ fn filter_with_expression(
 		let passed = match precompiled_exp.eval_boolean_with_context(&ctx) {
 			Ok(b) => b,
 			Err(_) => {
-				return Err(anyhow!(
-					"Failed to execute expression at line number {}",
-					line_number
-				))
+				line_invalid();
+				continue;
 			}
 		};
 
