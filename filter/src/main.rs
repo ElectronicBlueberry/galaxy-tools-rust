@@ -51,51 +51,51 @@ fn main() {
 		args.skip_lines,
 		&args.types,
 	) {
-		Ok(report) => print!("{}", report),
+		Ok(report) => print!("{report}"),
 		Err(e) => {
-			eprintln!("{}", e);
+			eprintln!("{e}");
 			exit(1);
 		}
 	};
 }
 
-/// create a buffered reader from a file path
+/// create a buffered reader from `file path`
 fn create_reader(file_path: &String) -> BufReader<File> {
-	let input_file = match File::open(&file_path) {
+	let input_file = match File::open(file_path) {
 		Ok(f) => f,
 		Err(_e) => {
-			eprintln!("Failed to open input file '{}'", file_path);
+			eprintln!("Failed to open input file '{file_path}'");
 			exit(1);
 		}
 	};
 
-	return BufReader::new(input_file);
+	BufReader::new(input_file)
 }
 
-/// create a buffered writer from a file path
+/// create a buffered writer from `file_path`
 fn create_writer(file_path: &String) -> BufWriter<File> {
-	let output_file = match File::create(&file_path) {
+	let output_file = match File::create(file_path) {
 		Ok(f) => f,
 		Err(_e) => {
-			eprintln!("Failed to create output file '{}'", file_path);
+			eprintln!("Failed to create output file '{file_path}'");
 			exit(1);
 		}
 	};
 
-	return BufWriter::new(output_file);
+	BufWriter::new(output_file)
 }
 
-/// filter input_reader to output_reader using expression
+/// filter `input_reader` to `output_reader` using `expression`
 fn filter_with_expression(
 	input_reader: &mut BufReader<File>,
 	output_writer: &mut BufWriter<File>,
 	expression: &String,
 	skip_lines: usize,
-	column_types: &Vec<ColumnType>,
+	column_types: &[ColumnType],
 ) -> Result<String, anyhow::Error> {
-	let columns = get_used_columns(&expression);
+	let columns = get_used_columns(expression);
 
-	let precompiled_exp = match compile_expression(&columns, column_types, &expression) {
+	let precompiled_exp = match compile_expression(&columns, column_types, expression) {
 		Ok(n) => n,
 		Err(e) => return Err(e),
 	};
@@ -116,12 +116,7 @@ fn filter_with_expression(
 	for (line_number, line) in input_reader.lines().enumerate() {
 		let line = match line {
 			Ok(l) => l,
-			Err(_) => {
-				return Err(anyhow!(
-					"Failed to read file at line number {}",
-					line_number
-				))
-			}
+			Err(_) => return Err(anyhow!("Failed to read file at line number {line_number}")),
 		};
 
 		// convert given line to buffer with newline
@@ -129,7 +124,7 @@ fn filter_with_expression(
 			if lines_kept == 0 {
 				line.into_bytes()
 			} else {
-				format!("\n{}", line).into_bytes()
+				format!("\n{line}").into_bytes()
 			}
 		};
 
@@ -140,15 +135,14 @@ fn filter_with_expression(
 				Ok(_) => lines_kept += 1,
 				Err(_) => {
 					return Err(anyhow!(
-						"Failed to write to output file at line number {}",
-						line_number
+						"Failed to write to output file at line number {line_number}"
 					))
 				}
 			};
 			continue;
 		}
 
-		if line.trim().is_empty() || line.starts_with("#") {
+		if line.trim().is_empty() || line.starts_with('#') {
 			skipped_lines += 1;
 			continue;
 		}
@@ -183,8 +177,7 @@ fn filter_with_expression(
 				Ok(_) => lines_kept += 1,
 				Err(_) => {
 					return Err(anyhow!(
-						"Failed to write to output file at line number {}",
-						line_number
+						"Failed to write to output file at line number {line_number}",
 					))
 				}
 			};
@@ -209,23 +202,18 @@ fn filter_with_expression(
 		);
 	} else {
 		report += &format!(
-			"No lines kept. Check filter condition '{}', see tool tips, syntax and examples\n",
-			expression
+			"No lines kept. Check filter condition '{expression}', see tool tips, syntax and examples\n"
 		);
 	}
 
 	if invalid_lines > 0 {
 		report += &format!(
-			"Skipped {} invalid line(s) starting at line {}: '{}'\n",
-			invalid_lines, first_invalid_line, invalid_line_content
+			"Skipped {invalid_lines} invalid line(s) starting at line {first_invalid_line}: '{invalid_line_content}'\n"
 		);
 	}
 
 	if skipped_lines > 0 {
-		report += &format!(
-			"Skipped {} comment (starting with #) or blank line(s)\n",
-			skipped_lines
-		);
+		report += &format!("Skipped {skipped_lines} comment (starting with #) or blank line(s)\n");
 	}
 
 	Ok(report)
@@ -233,17 +221,15 @@ fn filter_with_expression(
 
 /// compile and test run the expression to check for any errors
 fn compile_expression(
-	columns: &Vec<usize>,
-	column_types: &Vec<ColumnType>,
+	columns: &[usize],
+	column_types: &[ColumnType],
 	expression: &String,
 ) -> Result<Node, anyhow::Error> {
-	let precompiled_exp = match build_operator_tree(&expression) {
+	let precompiled_exp = match build_operator_tree(expression) {
 		Ok(n) => n,
 		Err(e) => {
 			return Err(anyhow!(
-				"Could not compile expression '{}'. Please check the syntax. \n Detailed Error: \n {}",
-				expression,
-				e
+				"Could not compile expression '{expression}'. Please check the syntax. \n Detailed Error: \n {e}"
 			))
 		}
 	};
@@ -264,40 +250,37 @@ fn compile_expression(
 	let context = get_context_for_line(&mock_line, column_types, columns).unwrap();
 
 	match precompiled_exp.eval_boolean_with_context(&context) {
-		Ok(_) => return Ok(precompiled_exp),
-		Err(e) => {
-			return Err(anyhow!(
-				"Expression '{}' invalid. Please check the syntax and column types. \n Detailed Error: \n {}",
-				expression,
-				e
+		Ok(_) => Ok(precompiled_exp),
+		Err(e) => 
+			Err(anyhow!(
+				"Expression '{expression}' invalid. Please check the syntax and column types. \n Detailed Error: \n {e}"
 			))
-		}
 	}
 }
 
 /// find columns potentially used in expression
-fn get_used_columns(expression: &String) -> Vec<usize> {
+fn get_used_columns(expression: &str) -> Vec<usize> {
 	let mut columns = Vec::new();
 	let r = Regex::new(r"c(?P<column>[0-9]+)").unwrap();
 
-	for captures in r.captures_iter(&expression) {
+	for captures in r.captures_iter(expression) {
 		let m = captures.name("column").unwrap();
 		let i = m.as_str().parse::<usize>().unwrap();
 		// column syntax is 1 based, so subtract 1
 		columns.push(i - 1);
 	}
 
-	return columns;
+	columns
 }
 
 /// Constructs a context for a line from the file, containing needed variables.
 /// Returns unspecific error for invalid lines
 fn get_context_for_line(
-	line: &String,
-	column_types: &Vec<ColumnType>,
-	columns: &Vec<usize>,
+	line: &str,
+	column_types: &[ColumnType],
+	columns: &[usize],
 ) -> Result<HashMapContext, anyhow::Error> {
-	let split_line = line.split("\t").collect::<Vec<&str>>();
+	let split_line = line.split('\t').collect::<Vec<&str>>();
 
 	let mut context = HashMapContext::new();
 
@@ -328,5 +311,5 @@ fn get_context_for_line(
 		};
 	}
 
-	return Ok(context);
+	Ok(context)
 }
