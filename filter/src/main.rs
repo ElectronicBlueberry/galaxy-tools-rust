@@ -283,7 +283,8 @@ fn get_used_columns(expression: &String) -> Vec<usize> {
 	for captures in r.captures_iter(&expression) {
 		let m = captures.name("column").unwrap();
 		let i = m.as_str().parse::<usize>().unwrap();
-		columns.push(i);
+		// column syntax is 1 based, so subtract 1
+		columns.push(i - 1);
 	}
 
 	return columns;
@@ -310,7 +311,8 @@ fn get_context_for_line(
 			None => &ColumnType::None,
 		};
 
-		let mut set = |v: Value| context.set_value(format!("c{}", column), v);
+		// column syntax is 1 based, so add 1
+		let mut set = |v: Value| context.set_value(format!("c{}", column + 1), v);
 
 		let str_value = match split_line.get(*column) {
 			Some(&s) => s,
