@@ -51,7 +51,7 @@ fn main() {
 		args.skip_lines,
 		&args.types,
 	) {
-		Ok(report) => println!("{}", report),
+		Ok(report) => print!("{}", report),
 		Err(e) => {
 			eprintln!("{}", e);
 			exit(1);
@@ -215,7 +215,7 @@ fn filter_with_expression(
 		);
 	} else {
 		report += &format!(
-			"No lines kept. Check filter condition {}, see tool tips, syntax and examples\n",
+			"No lines kept. Check filter condition '{}', see tool tips, syntax and examples\n",
 			expression
 		);
 	}
