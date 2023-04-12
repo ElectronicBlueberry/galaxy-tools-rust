@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use clap::{Parser, ValueEnum};
-use evalexpr::{build_operator_tree, ContextWithMutableVariables, HashMapContext, Value};
+use evalexpr::{build_operator_tree, ContextWithMutableVariables, HashMapContext, Node, Value};
 use regex::Regex;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
@@ -93,18 +93,12 @@ fn filter_with_expression(
 	skip_lines: usize,
 	column_types: &Vec<ColumnType>,
 ) -> Result<String, anyhow::Error> {
-	let precompiled_exp = match build_operator_tree(&expression) {
-		Ok(n) => n,
-		Err(e) => {
-			return Err(anyhow!(
-				"Could not compile expression '{}'. Please check the syntax. \n Detailed Error: \n {}",
-				expression,
-				e
-			))
-		}
-	};
-
 	let columns = get_used_columns(&expression);
+
+	let precompiled_exp = match compile_expression(&columns, column_types, &expression) {
+		Ok(n) => n,
+		Err(e) => return Err(e),
+	};
 
 	// Lines with invalid contents
 	let mut invalid_lines: usize = 0;
@@ -235,6 +229,50 @@ fn filter_with_expression(
 	}
 
 	Ok(report)
+}
+
+/// compile and test run the expression to check for any errors
+fn compile_expression(
+	columns: &Vec<usize>,
+	column_types: &Vec<ColumnType>,
+	expression: &String,
+) -> Result<Node, anyhow::Error> {
+	let precompiled_exp = match build_operator_tree(&expression) {
+		Ok(n) => n,
+		Err(e) => {
+			return Err(anyhow!(
+				"Could not compile expression '{}'. Please check the syntax. \n Detailed Error: \n {}",
+				expression,
+				e
+			))
+		}
+	};
+
+	let mut mock_values = Vec::new();
+
+	for t in column_types {
+		match t {
+			ColumnType::Bool => mock_values.push("true"),
+			ColumnType::Float => mock_values.push("4.213"),
+			ColumnType::Int => mock_values.push("42"),
+			ColumnType::Str => mock_values.push("Hello-World"),
+			ColumnType::None => mock_values.push(""),
+		}
+	}
+
+	let mock_line = mock_values.join("\t");
+	let context = get_context_for_line(&mock_line, column_types, columns).unwrap();
+
+	match precompiled_exp.eval_boolean_with_context(&context) {
+		Ok(_) => return Ok(precompiled_exp),
+		Err(e) => {
+			return Err(anyhow!(
+				"Expression '{}' invalid. Please check the syntax and column types. \n Detailed Error: \n {}",
+				expression,
+				e
+			))
+		}
+	}
 }
 
 /// find columns potentially used in expression
