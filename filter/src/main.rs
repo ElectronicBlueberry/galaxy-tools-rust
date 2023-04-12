@@ -299,10 +299,6 @@ fn get_context_for_line(
 ) -> Result<HashMapContext, anyhow::Error> {
 	let split_line = line.split("\t").collect::<Vec<&str>>();
 
-	if split_line.len() < column_types.len() {
-		return Err(anyhow!("invalid column"));
-	}
-
 	let mut context = HashMapContext::new();
 
 	for column in columns {
