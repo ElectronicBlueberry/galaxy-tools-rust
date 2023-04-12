@@ -97,10 +97,10 @@ fn filter_with_expression(
 		Ok(n) => n,
 		Err(e) => {
 			return Err(anyhow!(
-			"Could not compile expression '{}'. Please check the syntax. \n Detailed Error: \n {}",
-			expression,
-			e
-		))
+				"Could not compile expression '{}'. Please check the syntax. \n Detailed Error: \n {}",
+				expression,
+				e
+			))
 		}
 	};
 
@@ -131,10 +131,12 @@ fn filter_with_expression(
 		};
 
 		// convert given line to buffer with newline
-		let buf = |line: String| if lines_kept == 0 {
-			line.into_bytes()
-		} else {
-			format!("\n{}", line).into_bytes()
+		let buf = |line: String| {
+			if lines_kept == 0 {
+				line.into_bytes()
+			} else {
+				format!("\n{}", line).into_bytes()
+			}
 		};
 
 		total_lines += 1;
@@ -203,17 +205,31 @@ fn filter_with_expression(
 	let valid_lines = total_lines - skipped_lines;
 
 	if valid_lines > 0 {
-		report += &format!("Kept {:.2}% of {} valid lines ({} total lines)\n", 100.0 * lines_kept as f64 / valid_lines as f64, valid_lines, total_lines);
+		report += &format!(
+			"Kept {:.2}% of {} valid lines ({} total lines)\n",
+			100.0 * lines_kept as f64 / valid_lines as f64,
+			valid_lines,
+			total_lines
+		);
 	} else {
-		report += &format!("No lines kept. Check filter condition {}, see tool tips, syntax and examples\n", expression);
+		report += &format!(
+			"No lines kept. Check filter condition {}, see tool tips, syntax and examples\n",
+			expression
+		);
 	}
 
 	if invalid_lines > 0 {
-		report += &format!("Skipped {} invalid line(s) starting at line {}: '{}'\n", invalid_lines, first_invalid_line, invalid_line_content);
+		report += &format!(
+			"Skipped {} invalid line(s) starting at line {}: '{}'\n",
+			invalid_lines, first_invalid_line, invalid_line_content
+		);
 	}
 
 	if skipped_lines > 0 {
-		report += &format!("Skipped {} comment (starting with #) or blank line(s)\n", skipped_lines);
+		report += &format!(
+			"Skipped {} comment (starting with #) or blank line(s)\n",
+			skipped_lines
+		);
 	}
 
 	Ok(report)
