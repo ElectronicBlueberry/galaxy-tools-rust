@@ -120,13 +120,7 @@ fn filter_with_expression(
 		};
 
 		// convert given line to buffer with newline
-		let buf = |line: String| {
-			if lines_kept == 0 {
-				line.into_bytes()
-			} else {
-				format!("\n{line}").into_bytes()
-			}
-		};
+		let buf = |line: String| format!("{line}\r\n").into_bytes();
 
 		total_lines += 1;
 
@@ -251,10 +245,11 @@ fn compile_expression(
 
 	match precompiled_exp.eval_boolean_with_context(&context) {
 		Ok(_) => Ok(precompiled_exp),
-		Err(e) => 
+		Err(e) => {
 			Err(anyhow!(
 				"Expression '{expression}' invalid. Please check the syntax and column types. \n Detailed Error: \n {e}"
 			))
+		}
 	}
 }
 
