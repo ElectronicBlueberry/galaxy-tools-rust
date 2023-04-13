@@ -6,6 +6,9 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::process::exit;
 
+mod functions;
+use crate::functions::create_function_context;
+
 #[derive(Parser)]
 struct Arguments {
 	/// File to be filtered
@@ -113,6 +116,8 @@ fn filter_with_expression(
 
 	let mut lines_kept: usize = 0;
 
+	let mut ctx = create_function_context();
+
 	for (line_number, line) in input_reader.lines().enumerate() {
 		let line = match line {
 			Ok(l) => l,
@@ -150,8 +155,8 @@ fn filter_with_expression(
 			invalid_lines += 1;
 		};
 
-		let ctx = match get_context_for_line(&line, column_types, &columns) {
-			Ok(c) => c,
+		match mutate_context_for_line(&line, column_types, &columns, &mut ctx) {
+			Ok(_) => (),
 			Err(_) => {
 				line_invalid();
 				continue;
@@ -233,21 +238,22 @@ fn compile_expression(
 	for t in column_types {
 		match t {
 			ColumnType::Bool => mock_values.push("true"),
-			ColumnType::Float => mock_values.push("4.213"),
-			ColumnType::Int => mock_values.push("42"),
-			ColumnType::Str => mock_values.push("Hello-World"),
+			ColumnType::Float => mock_values.push("0.1"),
+			ColumnType::Int => mock_values.push("0"),
+			ColumnType::Str => mock_values.push("string"),
 			ColumnType::None => mock_values.push(""),
 		}
 	}
 
 	let mock_line = mock_values.join("\t");
-	let context = get_context_for_line(&mock_line, column_types, columns).unwrap();
+	let mut context = create_function_context();
+	mutate_context_for_line(&mock_line, column_types, columns, &mut context).unwrap();
 
 	match precompiled_exp.eval_boolean_with_context(&context) {
 		Ok(_) => Ok(precompiled_exp),
 		Err(e) => {
 			Err(anyhow!(
-				"Expression '{expression}' invalid. Please check the syntax and column types. \n Detailed Error: \n {e}"
+				"Expression test failed for expression: '{expression}'. Please check the syntax and column types. \n Detailed Error: \n {e}"
 			))
 		}
 	}
@@ -268,16 +274,15 @@ fn get_used_columns(expression: &str) -> Vec<usize> {
 	columns
 }
 
-/// Constructs a context for a line from the file, containing needed variables.
+/// Mutates `context` for a line from the file, containing needed variables.
 /// Returns unspecific error for invalid lines
-fn get_context_for_line(
+fn mutate_context_for_line(
 	line: &str,
 	column_types: &[ColumnType],
 	columns: &[usize],
-) -> Result<HashMapContext, anyhow::Error> {
+	context: &mut HashMapContext
+) -> Result<(), anyhow::Error> {
 	let split_line = line.split('\t').collect::<Vec<&str>>();
-
-	let mut context = HashMapContext::new();
 
 	for column in columns {
 		let t = match column_types.get(*column) {
@@ -306,5 +311,5 @@ fn get_context_for_line(
 		};
 	}
 
-	Ok(context)
+	Ok(())
 }
