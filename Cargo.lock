@@ -161,6 +161,7 @@ dependencies = [
  "clap",
  "evalexpr",
  "regex",
+ "test_utils",
 ]
 
 [[package]]
@@ -287,6 +288,10 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "test_utils"
+version = "0.1.0"
 
 [[package]]
 name = "unicode-ident"

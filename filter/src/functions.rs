@@ -14,5 +14,6 @@ pub fn create_function_context() -> HashMapContext {
 
 			Ok(Value::Boolean(false))
 		})
-	}.unwrap();
+	}
+	.unwrap();
 }

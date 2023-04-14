@@ -2,6 +2,7 @@
 
 members = [
     "filter",
+    "test_utils"
 ]
 
 [profile.release]

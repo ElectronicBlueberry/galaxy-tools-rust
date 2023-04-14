@@ -9,8 +9,11 @@ use std::process::exit;
 mod functions;
 use crate::functions::create_function_context;
 
+#[cfg(test)]
+mod test;
+
 #[derive(Parser)]
-struct Arguments {
+pub struct Arguments {
 	/// File to be filtered
 	#[arg(short, long)]
 	in_file: String,
@@ -33,7 +36,7 @@ struct Arguments {
 }
 
 #[derive(Clone, ValueEnum)]
-enum ColumnType {
+pub enum ColumnType {
 	Str,
 	Int,
 	Float,
@@ -44,16 +47,7 @@ enum ColumnType {
 fn main() {
 	let args = Arguments::parse();
 
-	let mut reader = create_reader(&args.in_file);
-	let mut writer = create_writer(&args.out_file);
-
-	match filter_with_expression(
-		&mut reader,
-		&mut writer,
-		&args.expression,
-		args.skip_lines,
-		&args.types,
-	) {
+	match run_with_args(&args) {
 		Ok(report) => print!("{report}"),
 		Err(e) => {
 			eprintln!("{e}");
@@ -62,34 +56,39 @@ fn main() {
 	};
 }
 
-/// create a buffered reader from `file path`
-fn create_reader(file_path: &String) -> BufReader<File> {
-	let input_file = match File::open(file_path) {
-		Ok(f) => f,
-		Err(_e) => {
-			eprintln!("Failed to open input file '{file_path}'");
-			exit(1);
-		}
-	};
+pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
+	let mut reader = create_reader(&args.in_file)?;
+	let mut writer = create_writer(&args.out_file)?;
 
-	BufReader::new(input_file)
+	let res = filter_with_expression(
+		&mut reader,
+		&mut writer,
+		&args.expression,
+		args.skip_lines,
+		&args.types,
+	);
+
+	res
+}
+
+/// create a buffered reader from `file path`
+pub fn create_reader(file_path: &String) -> Result<BufReader<File>, anyhow::Error> {
+	match File::open(file_path) {
+		Ok(f) => Ok(BufReader::new(f)),
+		Err(_) => Err(anyhow!("Failed to open input file '{file_path}'")),
+	}
 }
 
 /// create a buffered writer from `file_path`
-fn create_writer(file_path: &String) -> BufWriter<File> {
-	let output_file = match File::create(file_path) {
-		Ok(f) => f,
-		Err(_e) => {
-			eprintln!("Failed to create output file '{file_path}'");
-			exit(1);
-		}
-	};
-
-	BufWriter::new(output_file)
+pub fn create_writer(file_path: &String) -> Result<BufWriter<File>, anyhow::Error> {
+	match File::create(file_path) {
+		Ok(f) => Ok(BufWriter::new(f)),
+		Err(_) => Err(anyhow!("Failed to create output file '{file_path}'")),
+	}
 }
 
 /// filter `input_reader` to `output_reader` using `expression`
-fn filter_with_expression(
+pub fn filter_with_expression(
 	input_reader: &mut BufReader<File>,
 	output_writer: &mut BufWriter<File>,
 	expression: &String,
@@ -125,7 +124,7 @@ fn filter_with_expression(
 		};
 
 		// convert given line to buffer with newline
-		let buf = |line: String| format!("{line}\r\n").into_bytes();
+		let buf = |line: String| format!("{line}\n").into_bytes();
 
 		total_lines += 1;
 
@@ -280,7 +279,7 @@ fn mutate_context_for_line(
 	line: &str,
 	column_types: &[ColumnType],
 	columns: &[usize],
-	context: &mut HashMapContext
+	context: &mut HashMapContext,
 ) -> Result<(), anyhow::Error> {
 	let split_line = line.split('\t').collect::<Vec<&str>>();
 
