@@ -1,18 +1,15 @@
-use evalexpr::{context_map, HashMapContext, Value};
+use evalexpr::{context_map, EvalexprError, HashMapContext, Value, ValueType};
 
 pub fn create_function_context() -> HashMapContext {
 	return context_map! {
 		"in" => Function::new(|argument| {
 			let arguments = argument.as_fixed_len_tuple(2)?;
-			let tuple = arguments[1].as_tuple()?;
 
-			for value in tuple {
-				if value == arguments[0] {
-					return Ok(Value::Boolean(true));
-				}
+			match &arguments[1] {
+				Value::Tuple(tuple) => Ok(Value::Boolean(tuple.contains(&arguments[0]))),
+				Value::String(string) => Ok(Value::Boolean(string.contains(&arguments[0].as_string()?))),
+				v => Err(EvalexprError::TypeError { expected: vec![ValueType::Tuple, ValueType::String], actual: v.to_owned() })
 			}
-
-			Ok(Value::Boolean(false))
 		})
 	}
 	.unwrap();
