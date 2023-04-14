@@ -7,19 +7,3 @@ pub fn is_file_equal(path_a: &str, path_b: &str) -> bool {
 
 	data_a == data_b
 }
-
-pub fn get_tmp_dir() -> String {
-	"./.tmp".to_owned()
-}
-
-pub fn remove_tmp_dir() -> std::io::Result<()> {
-	let dir = get_tmp_dir();
-	fs::remove_dir_all(dir)?;
-	Ok(())
-}
-
-pub fn create_tmp_dir() -> std::io::Result<()> {
-	let dir = get_tmp_dir();
-	fs::create_dir_all(dir)?;
-	Ok(())
-}
