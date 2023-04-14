@@ -42,6 +42,7 @@ pub enum ColumnType {
 	Float,
 	Bool,
 	None,
+	List,
 }
 
 fn main() {
@@ -241,6 +242,7 @@ fn compile_expression(
 			ColumnType::Int => mock_values.push("0"),
 			ColumnType::Str => mock_values.push("string"),
 			ColumnType::None => mock_values.push(""),
+			ColumnType::List => mock_values.push("1,2,3"),
 		}
 	}
 
@@ -307,6 +309,13 @@ fn mutate_context_for_line(
 			ColumnType::Int => set(Value::Int(str_value.parse::<i64>()?))?,
 			ColumnType::Str => set(Value::String(str_value.to_string()))?,
 			ColumnType::None => set(Value::Empty)?,
+			ColumnType::List => set(Value::Tuple(
+				str_value
+					.split(',')
+					.into_iter()
+					.map(|s| Value::String(s.to_owned()))
+					.collect(),
+			))?,
 		};
 	}
 
