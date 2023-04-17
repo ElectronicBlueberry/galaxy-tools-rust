@@ -13,3 +13,8 @@ anyhow = "1.0"
 
 [dev-dependencies]
 test_utils = { path = "../test_utils" }
+
+[profile.release]
+lto = true
+panic = "abort"
+strip = true

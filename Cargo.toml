@@ -4,8 +4,3 @@ members = [
     "filter",
     "test_utils"
 ]
-
-[profile.release]
-lto = true
-panic = "abort"
-strip = true
