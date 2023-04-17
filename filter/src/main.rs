@@ -10,7 +10,7 @@ mod functions;
 use crate::functions::create_function_context;
 
 #[cfg(test)]
-mod test;
+mod tests;
 
 #[derive(Parser)]
 pub struct Arguments {
