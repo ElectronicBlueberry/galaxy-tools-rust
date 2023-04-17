@@ -12,3 +12,12 @@ source:
 test:
   commands:
     - filter -h
+
+about:
+  home: https://github.com/ElectronicBlueberry/galaxy-tools-rust
+  license: MIT
+  summary: Filter tab-separated-value files with a simple expression
+  description: |
+    This CLI tool allows for the filtering of tsv text files
+    using a simple expression syntax
+  dev_url: https://github.com/ElectronicBlueberry/galaxy-tools-rust
