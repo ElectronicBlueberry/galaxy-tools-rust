@@ -3,8 +3,11 @@ package:
   version: 0.1.0
 
 requirements:
-  build:
+  host:
     - rust
+
+build:
+  number: 1
 
 source:
   path: "../"
