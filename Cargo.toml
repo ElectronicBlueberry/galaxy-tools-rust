@@ -2,5 +2,6 @@
 
 members = [
     "filter",
-    "test_utils"
+    "test_utils",
+    "remove_beginning"
 ]

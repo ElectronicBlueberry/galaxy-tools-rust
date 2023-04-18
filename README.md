@@ -15,3 +15,10 @@ Filter a tab-separated-value file using a simple expression.
 All rows passing the expression will be kept.
 
 Use `cargo run -r -p filter -- --help` for more information.
+
+### Remove Beginning
+
+Remove the first `-n` lines from a file.
+Write result to a new file.
+
+Use `cargo run -r -p remove_beginning -- --help` for more information.

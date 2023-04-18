@@ -1,0 +1,26 @@
+package:
+  name: remove_beginning
+  version: 0.1.0
+
+requirements:
+  build:
+    - {{ compiler('rust') }}
+
+build:
+  number: 1
+
+source:
+  path: "../"
+
+test:
+  commands:
+    - remove_beginning -h
+
+about:
+  home: https://github.com/ElectronicBlueberry/galaxy-tools-rust
+  license: MIT
+  summary: Remove the first n lines of a file
+  description: |
+    This CLI tool removes the first -n lines from a file
+    and writes the result to an output file.
+  dev_url: https://github.com/ElectronicBlueberry/galaxy-tools-rust
