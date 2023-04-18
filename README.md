@@ -1,4 +1,4 @@
-# Galaxy Tool Rust
+# Galaxy Tools Rust
 
 Rust implementations of galaxy utility tools.
 This repository only contains the cli tools themselves, not the tool wrappers.
