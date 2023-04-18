@@ -28,3 +28,13 @@ Remove the first `-n` lines from a file.
 Write result to a new file.
 
 Use `cargo run -r -p remove_beginning -- --help` for more information.
+
+## Test coverage
+
+This repository aims to have 100% test coverage. All code should be either covered by
+integration tests, contained in `tests.rs`, or as unit tests (see `filter/src/functions.rs`).
+
+Untested code contained in `main()` should be kept to a minimum,
+and only be used to parse input and relay feedback to the command line.
+
+When adding a new tool/feature, make sure to include relevant tests.

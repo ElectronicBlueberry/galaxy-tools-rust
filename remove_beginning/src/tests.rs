@@ -17,7 +17,10 @@ fn remove_beginning() {
 	let res = run_with_args(&args);
 
 	assert!(res.is_ok());
-	assert!(is_file_equal(&args.out_file, "../test_data/remove_beginning_test1.bed"));
+	assert!(is_file_equal(
+		&args.out_file,
+		"../test_data/remove_beginning_test1.bed"
+	));
 
 	remove_dir_all(tmp).unwrap();
 }
