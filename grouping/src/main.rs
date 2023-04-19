@@ -129,7 +129,13 @@ pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
 			))?
 			.to_owned();
 
-		let group = groups.entry(group_val.to_owned()).or_insert(Group {
+		let group_val = if args.ignore_case {
+			group_val.to_lowercase()
+		} else {
+			group_val.to_owned()
+		};
+
+		let group = groups.entry(group_val).or_insert(Group {
 			columns: HashMap::new(),
 		});
 
