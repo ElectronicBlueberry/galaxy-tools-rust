@@ -10,6 +10,7 @@ clap = { version = "4.2.1", features = ["derive"] }
 anyhow = "1.0"
 rand = "0.8.4"
 indexmap = "1.9.3"
+gpoint = "0.2"
 
 [dev-dependencies]
 test_utils = { path = "../test_utils" }

@@ -1,3 +1,4 @@
+use gpoint::GPoint;
 use indexmap::IndexSet;
 use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
@@ -24,16 +25,16 @@ trait ToStringRound {
 impl ToStringRound for f64 {
 	fn to_string_round(&self, round: bool) -> String {
 		if round {
-			self.round().to_string()
+			GPoint(self.round()).to_string()
 		} else {
-			self.to_string()
+			GPoint(*self).to_string()
 		}
 	}
 }
 
 impl ToStringRound for usize {
 	fn to_string_round(&self, _round: bool) -> String {
-		self.to_string()
+		GPoint(*self as f64).to_string()
 	}
 }
 
