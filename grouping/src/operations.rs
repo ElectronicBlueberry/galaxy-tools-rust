@@ -1,3 +1,4 @@
+use indexmap::IndexSet;
 use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
 
@@ -129,7 +130,7 @@ impl Operation {
 			}
 			Operation::Concatenate => values.join(","),
 			Operation::ConcatenateDistinct => {
-				let mut set = HashSet::new();
+				let mut set = IndexSet::new();
 
 				for val in values {
 					set.insert(val.to_owned());

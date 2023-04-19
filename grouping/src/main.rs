@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::anyhow;
 use clap::Parser;
+use indexmap::IndexMap;
 use operations::{Operation, OperationFunction};
 
 mod operations;
@@ -114,7 +115,7 @@ pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
 	let mut writer = BufWriter::new(output_file);
 
 	let columns_used: Vec<usize> = args.operations.iter().map(|op_fn| op_fn.col).collect();
-	let mut groups: HashMap<String, Group> = HashMap::new();
+	let mut groups: IndexMap<String, Group> = IndexMap::new();
 
 	for (line_number, line) in reader.lines().enumerate() {
 		let line = line?;
