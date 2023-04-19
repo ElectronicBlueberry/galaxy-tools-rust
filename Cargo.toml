@@ -3,5 +3,6 @@
 members = [
     "filter",
     "test_utils",
-    "remove_beginning"
+    "remove_beginning",
+    "grouping"
 ]
