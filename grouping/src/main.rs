@@ -89,7 +89,7 @@ fn parse_operation(arg: &str) -> Result<OperationFunction, anyhow::Error> {
 
 	Ok(OperationFunction {
 		op,
-		col,
+		col: col - 1,
 		round,
 		default,
 	})
@@ -122,10 +122,10 @@ pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
 		let values: Vec<&str> = line.split("\t").collect();
 
 		let group_val = values
-			.get(args.group_by)
+			.get(args.group_by - 1)
 			.ok_or(anyhow!(
 				"Grouping column {} not defined on line {line_number}",
-				args.group_by
+				args.group_by - 1
 			))?
 			.to_owned();
 
