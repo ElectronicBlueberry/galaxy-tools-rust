@@ -163,7 +163,7 @@ pub struct OperationFunction {
 }
 
 impl OperationFunction {
-	fn run_operation(&self, values: &Vec<String>) -> String {
+	pub fn run_operation(&self, values: &Vec<String>) -> String {
 		self.op.run(&values, self.round, self.default)
 	}
 }

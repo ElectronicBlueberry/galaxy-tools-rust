@@ -1,3 +1,10 @@
+use std::{
+	collections::HashMap,
+	fs::File,
+	io::{BufRead, BufReader, BufWriter, Write},
+	process::exit,
+};
+
 use anyhow::anyhow;
 use clap::Parser;
 use operations::{Operation, OperationFunction};
@@ -5,7 +12,7 @@ use operations::{Operation, OperationFunction};
 mod operations;
 
 #[derive(Parser)]
-struct Arguments {
+pub struct Arguments {
 	/// File to be grouped
 	#[arg(short, long)]
 	in_file: String,
@@ -16,7 +23,7 @@ struct Arguments {
 
 	/// Column to group by
 	#[arg(short, long)]
-	grouping_column: usize,
+	group_by: usize,
 
 	/// Whether to ignore case when grouping
 	#[arg(short, long)]
@@ -27,8 +34,8 @@ struct Arguments {
 	delete_rows: Vec<char>,
 
 	/// Operations to run separated by a space. Format: operation,column,round_result,(optional)default_value
-	#[arg(short, long, value_parser = parse_operation, num_args = 1.., value_delimiter = ' ')]
-	operations: Vec<OperationFunction>
+	#[arg(short, long, value_parser = parse_operation, num_args = 0.., value_delimiter = ' ')]
+	operations: Vec<OperationFunction>,
 }
 
 trait ToOptionF64 {
@@ -89,4 +96,71 @@ fn parse_operation(arg: &str) -> Result<OperationFunction, anyhow::Error> {
 
 fn main() {
 	let args = Arguments::parse();
+
+	match run_with_args(&args) {
+		Ok(report) => println!("{report}"),
+		Err(e) => {
+			eprintln!("{e}");
+			exit(1);
+		}
+	};
+}
+
+pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
+	let input_file = File::open(&args.in_file)?;
+	let output_file = File::create(&args.out_file)?;
+
+	let reader = BufReader::new(input_file);
+	let mut writer = BufWriter::new(output_file);
+
+	let columns_used: Vec<usize> = args.operations.iter().map(|op_fn| op_fn.col).collect();
+	let mut groups: HashMap<String, Group> = HashMap::new();
+
+	for (line_number, line) in reader.lines().enumerate() {
+		let line = line?;
+		let values: Vec<&str> = line.split("\t").collect();
+
+		let group_val = values
+			.get(args.group_by)
+			.ok_or(anyhow!(
+				"Grouping column {} not defined on line {line_number}",
+				args.group_by
+			))?
+			.to_owned();
+
+		for col in &columns_used {
+			let group = groups.entry(group_val.to_owned()).or_insert(Group {
+				columns: HashMap::new(),
+			});
+			let column = group.columns.entry(*col).or_insert(Vec::new());
+			let val = match values.get(*col) {
+				Some(s) => s,
+				None => "",
+			};
+
+			column.push(val.to_owned());
+		}
+	}
+
+	for (key, group) in &groups {
+		writer.write(&format!("{key} ").into_bytes())?;
+
+		let mut outputs = Vec::new();
+
+		for op_fn in &args.operations {
+			let values = group.columns.get(&op_fn.col).ok_or(anyhow!("Internal Error. HashMap improperly populated"))?;
+			let output = op_fn.run_operation(values);
+			outputs.push(output);
+		}
+
+		writer.write(&format!("{}\n", outputs.join("")).into_bytes())?;
+	}
+
+	writer.flush()?;
+
+	Ok(format!("Grouped into {} lines", groups.len()))
+}
+
+struct Group {
+	columns: HashMap<usize, Vec<String>>,
 }
