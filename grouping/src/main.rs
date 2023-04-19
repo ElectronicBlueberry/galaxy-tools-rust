@@ -34,7 +34,7 @@ pub struct Arguments {
 	delete_rows: Vec<char>,
 
 	/// Operations to run separated by a space. Format: operation,column,round_result,(optional)default_value
-	#[arg(short, long, value_parser = parse_operation, num_args = 0.., value_delimiter = ' ')]
+	#[arg(visible_alias = "ops", visible_alias = "op", long, value_parser = parse_operation, num_args = 0.., value_delimiter = ' ')]
 	operations: Vec<OperationFunction>,
 }
 
@@ -128,10 +128,11 @@ pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
 			))?
 			.to_owned();
 
+		let group = groups.entry(group_val.to_owned()).or_insert(Group {
+			columns: HashMap::new(),
+		});
+
 		for col in &columns_used {
-			let group = groups.entry(group_val.to_owned()).or_insert(Group {
-				columns: HashMap::new(),
-			});
 			let column = group.columns.entry(*col).or_insert(Vec::new());
 			let val = match values.get(*col) {
 				Some(s) => s,
@@ -143,17 +144,19 @@ pub fn run_with_args(args: &Arguments) -> Result<String, anyhow::Error> {
 	}
 
 	for (key, group) in &groups {
-		writer.write(&format!("{key} ").into_bytes())?;
-
 		let mut outputs = Vec::new();
+		outputs.push(key.to_owned());
 
 		for op_fn in &args.operations {
-			let values = group.columns.get(&op_fn.col).ok_or(anyhow!("Internal Error. HashMap improperly populated"))?;
+			let values = group
+				.columns
+				.get(&op_fn.col)
+				.ok_or(anyhow!("Internal Error. HashMap improperly populated"))?;
 			let output = op_fn.run_operation(values);
 			outputs.push(output);
 		}
 
-		writer.write(&format!("{}\n", outputs.join("")).into_bytes())?;
+		writer.write(&format!("{}\n", outputs.join("\t")).into_bytes())?;
 	}
 
 	writer.flush()?;
